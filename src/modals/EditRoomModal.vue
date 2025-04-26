@@ -78,7 +78,7 @@ const fetchRoomTypes = async () => {
 const handleSubmit = async () => {
   const newRoom = {
     number: form.number,
-    room_type: Number(form.room_type),
+    room_type: form.room_type,
     status: form.status,
     floor: form.floor,
     price_per_night: form.price_per_night,
@@ -97,8 +97,8 @@ const handleSubmit = async () => {
       }
     );
     toast.success("Room updated successfully");
-    closeModal();
     props.fetchRooms();
+    closeModal();
   } catch (error) {
     toast.error("Error updating order");
   }
@@ -107,8 +107,14 @@ const handleSubmit = async () => {
 onMounted(async () => {
   try {
     await fetchRoomTypes();
+    const token = localStorage.getItem("access");
     const response = await axios.get(
-      `${API_BASE_URL}${API_ENDPOINTS.ROOMS}${roomId}`
+      `${API_BASE_URL}${API_ENDPOINTS.ROOMS}${roomId}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
     );
     state.room = response.data;
     // Populate the inputs
@@ -169,7 +175,7 @@ onMounted(async () => {
                 <Label for="room_type">Room Type</Label>
                 <Select v-model="form.room_type">
                   <SelectTrigger id="room_type" class="w-full">
-                    <SelectValue placeholder="Select Room Type" />
+                    <SelectValue :placeholder="form.room_type" />
                   </SelectTrigger>
                   <SelectContent position="popper" class="w-full">
                     <SelectItem

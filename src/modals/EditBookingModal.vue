@@ -95,9 +95,23 @@ const fetchRooms = async () => {
 };
 
 const handleSubmit = async () => {
+  const guestId =
+    guests.value.find((guest) => guest.full_name === form.guest)?.id || null;
+  const roomId =
+    rooms.value.find((room) => room.number === form.room)?.id || null;
+
+  // Check if guestId and roomId are valid before proceeding
+  if (!guestId || !roomId) {
+    toast.error("Please select both guest and room.");
+    return; // Stop the submission if there's an issue
+  }
+
+  console.log("guestId:", guestId);
+  console.log("roomId:", roomId);
+
   const newBooking = {
-    guest: form.guest,
-    room: form.room,
+    guest: Number(guestId),
+    room: Number(roomId),
     check_in: form.check_in,
     check_out: form.check_out,
     status: form.status,
@@ -120,8 +134,21 @@ const handleSubmit = async () => {
     props.fetchBookings();
   } catch (error) {
     toast.error("Error updating booking");
+    // console.log(error);
   }
 };
+
+// const guestNamePlaceholder = computed(() => {
+//   const selectedGuest = guests.value.find(
+//     (guest) => guest.full_name === form.guest
+//   );
+//   return selectedGuest ? selectedGuest.full_name : form.guest || "Select Guest";
+// });
+
+// const roomNumberPlaceholder = computed(() => {
+//   const selectedRoom = rooms.value.find((room) => room.number === form.room);
+//   return selectedRoom ? selectedRoom.number : form.room || "Select Room";
+// });
 
 onMounted(async () => {
   try {
@@ -133,7 +160,9 @@ onMounted(async () => {
     state.booking = response.data;
     // Populate the inputs
     form.guest = state.booking.guest;
+    console.log(form.guest);
     form.room = state.booking.room;
+    console.log(form.room);
     form.check_in = state.booking.check_in;
     form.check_out = state.booking.check_out;
     form.status = state.booking.status;
@@ -158,31 +187,33 @@ onMounted(async () => {
               <Label for="guest">Guest</Label>
               <Select v-model="form.guest">
                 <SelectTrigger id="guest" class="w-full">
-                  <SelectValue placeholder="Select Guest" />
+                  <SelectValue :placeholder="form.guest" />
                 </SelectTrigger>
                 <SelectContent position="popper" class="w-full">
                   <SelectItem
                     v-for="guest in guests"
                     :key="guest.id"
-                    :value="guest.id"
-                    ><span>{{ guest.full_name }}</span></SelectItem
+                    :value="guest.full_name"
                   >
+                    {{ guest.full_name }}
+                  </SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div class="flex flex-col space-y-1.5">
-              <Label for="room">Room</Label>
+              <Label for="room_type">Room</Label>
               <Select v-model="form.room">
                 <SelectTrigger id="room" class="w-full">
-                  <SelectValue placeholder="Select Room" />
+                  <SelectValue :placeholder="form.room" />
                 </SelectTrigger>
                 <SelectContent position="popper" class="w-full">
                   <SelectItem
                     v-for="room in rooms"
                     :key="room.id"
-                    :value="room.id"
-                    ><span>{{ room.number }}</span></SelectItem
+                    :value="room.number"
                   >
+                    {{ room.number }}
+                  </SelectItem>
                 </SelectContent>
               </Select>
             </div>
