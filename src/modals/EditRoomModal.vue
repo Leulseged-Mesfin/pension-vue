@@ -76,9 +76,19 @@ const fetchRoomTypes = async () => {
 };
 
 const handleSubmit = async () => {
+  const roomTypeId =
+    roomTypes.value.find((roomType) => roomType.name === form.room_type)?.id ||
+    null;
+
+  // Check if guestId and roomId are valid before proceeding
+  if (!roomTypeId) {
+    toast.error("The ID is not passed.");
+    return; // Stop the submission if there's an issue
+  }
+
   const newRoom = {
     number: form.number,
-    room_type: form.room_type,
+    room_type: Number(roomTypeId),
     status: form.status,
     floor: form.floor,
     price_per_night: form.price_per_night,
@@ -152,25 +162,6 @@ onMounted(async () => {
                 />
               </div>
               <!-- Room type Select Dropdown -->
-              <!-- <div class="flex flex-col space-y-1.5">
-                <Label for="status" class="mb-1">Select a room type</Label>
-
-                <Select v-model="form.room_type">
-                  <SelectTrigger id="status" class="w-full">
-                    <SelectValue placeholder="Select Status" />
-                  </SelectTrigger>
-                  <SelectContent position="popper" class="w-full">
-                    <SelectItem
-                      v-for="roomType in roomTypes"
-                      :key="roomType.id"
-                      :value="roomType.id"
-                    >
-                      {{ roomType.name }}
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-              </div> -->
-              <!-- Room Type another try -->
               <div class="flex flex-col space-y-1.5">
                 <Label for="room_type">Room Type</Label>
                 <Select v-model="form.room_type">
