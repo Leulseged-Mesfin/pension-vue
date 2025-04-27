@@ -1,8 +1,7 @@
-<script setup>
-import toast, { Toaster } from "vue3-hot-toast";
+<script setup lang="ts">
+import toast from "vue3-hot-toast";
 import axios from "axios";
-import { useRouter } from "vue-router";
-import { ref, reactive, onMounted, computed } from "vue";
+import { ref, reactive, onMounted } from "vue";
 import { API_BASE_URL, API_ENDPOINTS } from "@/utils/apiConfig";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,17 +13,30 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+
+// shadcn components
 import { cn } from "@/lib/utils";
 import { Calendar } from "@/components/ui/calendar";
 import {
   Popover,
-  PopoverContent,
   PopoverTrigger,
+  PopoverContent,
 } from "@/components/ui/popover";
-import { DateFormatter, getLocalTimeZone } from "@internationalized/date";
+
+// icons
 import { CalendarIcon } from "lucide-vue-next";
 
-const router = useRouter();
+// date handling
+import { DateFormatter, getLocalTimeZone } from "@internationalized/date";
+import type { CalendarDate } from "@internationalized/date"; // correct type
+
+const df = new DateFormatter("en-US", {
+  dateStyle: "long",
+});
+
+// selected date variable
+const value1 = ref<CalendarDate | null>(null);
+const value2 = ref<CalendarDate | null>(null);
 
 const props = defineProps({
   modelValue: {
@@ -59,8 +71,8 @@ const state = reactive({
 const form = reactive({
   guest: "",
   room: "",
-  check_in: "2025-04-25",
-  check_out: "2025-04-26",
+  check_in: "",
+  check_out: "",
   status: "",
 });
 
@@ -95,6 +107,18 @@ const fetchRooms = async () => {
 };
 
 const handleSubmit = async () => {
+  const checkInYear = value1.value?.year;
+  const checkInMonth = value1.value?.month;
+  const checkInDay = value1.value?.day;
+  const checkOutYear = value2.value?.year;
+  const checkOutMonth = value2.value?.month;
+  const checkOutDay = value2.value?.day;
+
+  const PreviousCheckInDate = state.booking.check_in;
+  const PreviousCheckOutDate = state.booking.check_out;
+  const NewCheckInDate = `${checkInYear}-${checkInMonth}-${checkInDay}`;
+  const NewCheckOutDate = `${checkOutYear}-${checkOutMonth}-${checkOutDay}`;
+
   const guestId =
     guests.value.find((guest) => guest.full_name === form.guest)?.id || null;
   const roomId =
@@ -106,14 +130,17 @@ const handleSubmit = async () => {
     return; // Stop the submission if there's an issue
   }
 
-  console.log("guestId:", guestId);
-  console.log("roomId:", roomId);
-
   const newBooking = {
     guest: Number(guestId),
     room: Number(roomId),
-    check_in: form.check_in,
-    check_out: form.check_out,
+    check_in:
+      NewCheckInDate === "undefined-undefined-undefined"
+        ? PreviousCheckInDate
+        : NewCheckInDate,
+    check_out:
+      NewCheckOutDate === "undefined-undefined-undefined"
+        ? PreviousCheckOutDate
+        : NewCheckOutDate,
     status: form.status,
   };
 
@@ -134,21 +161,8 @@ const handleSubmit = async () => {
     props.fetchBookings();
   } catch (error) {
     toast.error("Error updating booking");
-    // console.log(error);
   }
 };
-
-// const guestNamePlaceholder = computed(() => {
-//   const selectedGuest = guests.value.find(
-//     (guest) => guest.full_name === form.guest
-//   );
-//   return selectedGuest ? selectedGuest.full_name : form.guest || "Select Guest";
-// });
-
-// const roomNumberPlaceholder = computed(() => {
-//   const selectedRoom = rooms.value.find((room) => room.number === form.room);
-//   return selectedRoom ? selectedRoom.number : form.room || "Select Room";
-// });
 
 onMounted(async () => {
   try {
@@ -160,9 +174,7 @@ onMounted(async () => {
     state.booking = response.data;
     // Populate the inputs
     form.guest = state.booking.guest;
-    console.log(form.guest);
     form.room = state.booking.room;
-    console.log(form.room);
     form.check_in = state.booking.check_in;
     form.check_out = state.booking.check_out;
     form.status = state.booking.status;
@@ -219,53 +231,53 @@ onMounted(async () => {
             </div>
             <div class="flex flex-col space-y-1.5">
               <Label for="name">Check In</Label>
-              <Popover v-model="form.check_in">
+              <Popover>
                 <PopoverTrigger as-child>
                   <Button
                     variant="outline"
                     :class="
                       cn(
                         'w-full justify-start text-left font-normal',
-                        !value && 'text-muted-foreground'
+                        !value1 && 'text-muted-foreground'
                       )
                     "
                   >
                     <CalendarIcon class="mr-2 h-4 w-4" />
                     {{
-                      value
-                        ? df.format(value.toDate(getLocalTimeZone()))
-                        : "Pick a check-in date"
+                      value1
+                        ? df.format(value1.toDate(getLocalTimeZone()))
+                        : form.check_in
                     }}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent class="w-auto p-0">
-                  <Calendar v-model="value" initial-focus />
+                  <Calendar v-model="value1" initial-focus />
                 </PopoverContent>
               </Popover>
             </div>
             <div class="flex flex-col space-y-1.5">
               <Label for="name">Check Out</Label>
-              <Popover v-model="form.check_in">
+              <Popover>
                 <PopoverTrigger as-child>
                   <Button
                     variant="outline"
                     :class="
                       cn(
                         'w-full justify-start text-left font-normal',
-                        !value && 'text-muted-foreground'
+                        !value2 && 'text-muted-foreground'
                       )
                     "
                   >
                     <CalendarIcon class="mr-2 h-4 w-4" />
                     {{
-                      value
-                        ? df.format(value.toDate(getLocalTimeZone()))
-                        : "Pick a check-in date"
+                      value2
+                        ? df.format(value2.toDate(getLocalTimeZone()))
+                        : form.check_out
                     }}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent class="w-auto p-0">
-                  <Calendar v-model="value" initial-focus />
+                  <Calendar v-model="value2" initial-focus />
                 </PopoverContent>
               </Popover>
             </div>
